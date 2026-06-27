@@ -68,8 +68,21 @@ def run(source, save: bool, zones: dict) -> None:
     tracker = DeepSort(max_age=MAX_AGE, n_init=MIN_HITS)
 
     cap_source = 0 if source is None else source
-    cap = cv2.VideoCapture(cap_source)
-    if not cap.isOpened():
+
+    # Try DirectShow first on Windows (avoids MSMF errors), then default backend
+    cap = None
+    if isinstance(cap_source, int):
+        for backend in (cv2.CAP_DSHOW, cv2.CAP_MSMF, cv2.CAP_ANY):
+            _cap = cv2.VideoCapture(cap_source, backend)
+            if _cap.isOpened():
+                cap = _cap
+                print(f"[INFO] Camera opened with backend {backend}")
+                break
+            _cap.release()
+    else:
+        cap = cv2.VideoCapture(cap_source)
+
+    if cap is None or not cap.isOpened():
         sys.exit(f"[ERROR] Cannot open source: {cap_source}")
 
     fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
