@@ -85,6 +85,10 @@ def run(source, save: bool, zones: dict) -> None:
     if cap is None or not cap.isOpened():
         sys.exit(f"[ERROR] Cannot open source: {cap_source}")
 
+    # Warm-up: discard first frames — Windows cameras need a moment to start streaming
+    for _ in range(10):
+        cap.read()
+
     fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     frame_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
